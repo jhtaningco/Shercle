@@ -8,6 +8,7 @@ import {
   Poppins_700Bold,
   Poppins_500Medium,
 } from "@expo-google-fonts/poppins";
+import '../global.css';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
