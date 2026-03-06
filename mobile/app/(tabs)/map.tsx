@@ -2,14 +2,14 @@ import { View, SafeAreaView } from 'react-native';
 import { Typography } from '../../src/components/ui/Typography';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function ReportsScreen() {
+export default function MapScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 items-center justify-center p-6 gap-4">
-        <Ionicons name="document-text-outline" size={64} color="#0ea5e9" />
-        <Typography variant="h2">Reports</Typography>
+        <Ionicons name="map-outline" size={64} color="#0ea5e9" />
+        <Typography variant="h2">Map View</Typography>
         <Typography variant="body" color="muted" align="center">
-          View your pending and resolved cases, and submit new reports here.
+          Interactive map tracking your location and your Circle's locations will go here.
         </Typography>
       </View>
     </SafeAreaView>

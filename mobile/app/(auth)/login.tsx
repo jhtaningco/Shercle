@@ -16,8 +16,8 @@ export default function LoginScreen() {
     setLoading(true);
     setTimeout(() => {
         setLoading(false);
-        // routing to main app later
-        alert("Login successful! Need to hook up to main app.");
+        // router to main app tabs
+        router.replace('/(tabs)');
     }, 1500);
   };
 
