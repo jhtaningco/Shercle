@@ -39,12 +39,15 @@ export default function RootLayout() {
   return <RootLayoutNav />;
 }
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-
-      <Stack.Screen name="(auth)" options={{ presentation: "modal" }} />
-    </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)" options={{ presentation: "modal" }} />
+      </Stack>
+    </GestureHandlerRootView>
   );
 }
