@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '../../src/components/ui/Button';
 import { TextInput } from '../../src/components/ui/TextInput';
 import { Typography } from '../../src/components/ui/Typography';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -22,68 +23,86 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-background"
+    <ImageBackground 
+      source={require('../../assets/images/backgrounds/auth-bg.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
     >
-        <ScrollView contentContainerClassName="flex-grow p-6 justify-center">
-            
-            <View className="items-center mb-8">
-                <Image 
-                    source={require('../../assets/images/logos/logo-tagline-1.png')} 
-                    className="w-48 h-48"
-                    resizeMode="contain"
-                />
-            </View>
+      <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
+      >
+          <ScrollView contentContainerClassName="flex-grow p-10">
+              
+              <View className="flex-1 justify-center w-full">
+                  <View className="items-center mb-12">
+                      <Image 
+                          source={require('../../assets/images/logos/logo-tagline-1.png')} 
+                          className="w-64 h-24"
+                          resizeMode="contain"
+                      />
+                  </View>
 
-            <View className="mb-8">
-                <Typography variant="h3" className="mb-2 text-slate-800">Welcome Back</Typography>
-                <Typography variant="body" color="muted">Log in to continue to Shercle.</Typography>
-            </View>
+                  <View className="items-start mb-6">
+                      <Typography variant="h1" className="text-black font-extrabold text-4xl">Log In</Typography>
+                  </View>
 
-            <View className="gap-2 mb-8">
-                <TextInput 
-                    label="Email Address"
-                    placeholder="Enter your email"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={email}
-                    onChangeText={setEmail}
-                />
-                
-                <TextInput 
-                    label="Password"
-                    placeholder="Enter your password"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                />
+                  <View className="gap-6 mb-2 items-center w-full">
+                      <View className="w-full">
+                          <TextInput 
+                            variant="glass"
+                            label={undefined as any}
+                            placeholder="Email"
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            value={email}
+                            onChangeText={setEmail}
+                          />
+                      </View>
+                      
+                      <View className="w-full">
+                          <TextInput 
+                            variant="glass"
+                            label={undefined as any}
+                            placeholder="Password"
+                            secureTextEntry
+                            value={password}
+                            onChangeText={setPassword}
+                          />
+                          
+                      </View>
+                  </View>
 
-                <TouchableOpacity className="self-end mt-2">
-                    <Typography variant="bodySmall" color="primary" weight="medium">Forgot Password?</Typography>
-                </TouchableOpacity>
-            </View>
+                  <View className="flex-row justify-start w-full mb-8 pl-1 mt-2">
+                      <Typography variant="bodySmall" style={{ color: '#94a3b8' }}>Forgot Password? </Typography>
+                      <TouchableOpacity>
+                          <Typography variant="bodySmall" style={{ textDecorationLine: 'underline', color: '#94a3b8' }}>Click Here</Typography>
+                      </TouchableOpacity>
+                  </View>
 
-            <View className="gap-4 mt-auto">
-                <Button 
-                    variant="primary" 
-                    fullWidth 
-                    size="lg" 
-                    onPress={handleLogin}
-                    loading={loading}
-                >
-                    Log In
-                </Button>
-                
-                <View className="flex-row justify-center items-center mt-4">
-                    <Typography variant="body" color="muted" className="mr-1">Don't have an account?</Typography>
-                    <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-                        <Typography variant="body" color="primary" weight="bold">Sign Up</Typography>
-                    </TouchableOpacity>
-                </View>
-            </View>
+                  <View className="items-end w-full">
+                      <Button 
+                          className='bg-[#4F25C7] w-full max-w-[160px]'
+                          variant="login-3d" 
+                          size="lg" 
+                          onPress={handleLogin}
+                          loading={loading}
+                          fullWidth
+                      >
+                          Log In
+                      </Button>
+                  </View>
+              </View>
+              
+              <View className="flex-row justify-center items-center mt-6 mb-6">
+                  <Typography variant="body" color="muted" className="mr-1">Don't have an account?</Typography>
+                  <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+                      <Typography variant="body" weight="bold" style={{ color: '#0ea5e9' }}>Sign Up</Typography>
+                  </TouchableOpacity>
+              </View>
 
-        </ScrollView>
-    </KeyboardAvoidingView>
+          </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }

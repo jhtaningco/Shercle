@@ -1,29 +1,100 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, LayoutAnimation } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
+
+function CustomTabBar({ state, descriptors, navigation }: any) {
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [state.index]);
+  
+  return (
+    <View style={[styles.tabBarContainer, { bottom: 20 + insets.bottom }]}>
+      <View style={styles.tabBar}>
+        {state.routes.map((route: any, index: number) => {
+          const { options } = descriptors[route.key];
+          const label = options.tabBarLabel !== undefined
+            ? options.tabBarLabel
+            : options.title !== undefined
+              ? options.title
+              : route.name;
+
+          const isFocused = state.index === index;
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name, route.params);
+            }
+          };
+
+          const onLongPress = () => {
+            navigation.emit({
+              type: 'tabLongPress',
+              target: route.key,
+            });
+          };
+
+          const isSOS = route.name === 'index';
+          
+          // Determine Icon
+          let iconName: any = 'ellipse-outline';
+          if (route.name === 'index') iconName = 'flag';
+          if (route.name === 'map') iconName = 'location';
+          if (route.name === 'reports') iconName = 'document-text';
+          if (route.name === 'profile') iconName = 'person';
+
+          // Determine Active Color
+          const activeColor = isSOS ? '#FF3131' : '#0ea5e9';
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              testID={options.tabBarTestID}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={[
+                styles.tabItem,
+                isFocused && { ...styles.activeTabItem, backgroundColor: activeColor }
+              ]}
+            >
+              <View style={styles.tabContent}>
+                <Ionicons 
+                  name={isFocused && !isSOS && iconName === 'ellipse-outline' ? 'ellipse' : iconName} 
+                  size={22} 
+                  color={isFocused ? "#FFFFFF" : "#525252"} 
+                />
+                {isFocused && (
+                  <Text style={styles.activeText}>
+                    {label}
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
 
 export default function TabLayout() {
   return (
     <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        headerShown: false, // We usually want custom headers per screen to control the exact look
-        tabBarActiveTintColor: '#0ea5e9', // Shercle Primary Blue
-        tabBarInactiveTintColor: '#94a3b8', // Slate 400
-        tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopWidth: 1,
-          borderTopColor: '#f1f5f9',
-          elevation: 10,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.05,
-          shadowRadius: 12,
-          height: 60, // A bit of extra breathing room for thumbs
-          paddingBottom: 8, // Lift icons up from the very bottom edge on non-iPhone X devices
-        },
-        tabBarLabelStyle: {
-          fontFamily: 'Poppins_500Medium',
-          fontSize: 10,
-        }
+        headerShown: false,
       }}
     >
       <Tabs.Screen
@@ -43,7 +114,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="circle"
         options={{
-          title: 'My Circle',
+          title: 'Circle',
           tabBarIcon: ({ color }) => <Ionicons name="people" size={26} color={color} />,
         }}
       />
@@ -64,3 +135,57 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBarContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderRadius: 50,
+    height: 70,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+  },
+  activeTabItem: {
+    flex: 2,
+    borderRadius: 40,
+    height: 54,
+    marginHorizontal: 4,
+  },
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  activeText: {
+    color: '#FFFFFF',
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 16,
+    textTransform: 'uppercase',
+  },
+});
