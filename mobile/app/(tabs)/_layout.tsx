@@ -1,8 +1,12 @@
 import { Tabs } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, LayoutAnimation } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -69,6 +73,30 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                 isFocused && { ...styles.activeTabItem, backgroundColor: activeColor }
               ]}
             >
+              {isFocused && (
+                <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                  <LinearGradient
+                    colors={['rgba(0,0,0,0.15)', 'transparent']}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, borderRadius: 40 }}
+                  />
+                  <LinearGradient
+                    colors={['rgba(0,0,0,0.1)', 'transparent']}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
+                    style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 6, borderRadius: 40 }}
+                  />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.05)']}
+                    style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, borderRadius: 40 }}
+                  />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.05)']}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
+                    style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 4, borderRadius: 40 }}
+                  />
+                </View>
+              )}
               <View style={styles.tabContent}>
                 <Ionicons 
                   name={isFocused && !isSOS && iconName === 'ellipse-outline' ? 'ellipse' : iconName} 
@@ -82,6 +110,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                 )}
               </View>
             </TouchableOpacity>
+
           );
         })}
       </View>
@@ -91,7 +120,10 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
 export default function TabLayout() {
   return (
-    <Tabs
+    <>
+      <StatusBar style="dark" />
+      <Tabs
+
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
@@ -105,19 +137,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="map"
-        options={{
-          title: 'Map',
-          tabBarIcon: ({ color }) => <Ionicons name="map" size={26} color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="circle"
         options={{
           title: 'Circle',
           tabBarIcon: ({ color }) => <Ionicons name="people" size={26} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Map',
+          tabBarIcon: ({ color }) => <Ionicons name="map" size={26} color={color} />,
+        }}
+      />
+      
       <Tabs.Screen
         name="reports"
         options={{
@@ -132,9 +165,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Ionicons name="person-circle" size={28} color={color} />, // A slightly larger profile icon
         }}
       />
-    </Tabs>
+      </Tabs>
+    </>
   );
 }
+
 
 const styles = StyleSheet.create({
   tabBarContainer: {
@@ -175,7 +210,9 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     height: 54,
     marginHorizontal: 4,
+    overflow: 'hidden',
   },
+
   tabContent: {
     flexDirection: 'row',
     alignItems: 'center',

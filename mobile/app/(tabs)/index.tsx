@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, SafeAreaView, TouchableOpacity,
+  View, Text, TouchableOpacity,
   Switch, Animated, StyleSheet, Pressable, Dimensions, Image, Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import SOSModal from '@/src/components/sos/SOSModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Header } from '@/src/components/common/Header';
+
 
 const { width } = Dimensions.get('window');
-const SIZE = Math.min(width * 0.58, 240);
+const SIZE = 276;
 const L2 = SIZE * 0.87;
 const L3 = SIZE * 0.70;
 const L4 = SIZE * 0.54;
@@ -91,45 +94,68 @@ export default function HomeScreen() {
         <View style={s.ambientGlow} />
 
         {/* Header */}
-        <View style={s.header}>
-          <View style={s.logoRow}>
-            <Image source={require('../../assets/images/logos/logo-main.png')} style={s.logo} resizeMode="contain" />
-            <View>
-              <Text style={s.mabuhay}>Mabuhay!</Text>
-              <Text style={s.name}>Maria Santos</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={s.notifBtn} activeOpacity={0.7}>
-            <Ionicons name="notifications-outline" size={22} color="#111827" />
-            <View style={s.notifDot} />
-          </TouchableOpacity>
-        </View>
+        <Header 
+          name="Maria Santos" 
+          onNotificationPress={() => console.log('Notification pressed')} 
+        />
+
 
         {/* SOS Button */}
-        <View style={s.sosArea}>
-          {[
-            { val: pulse2, op: pulse2Op, extra: 70 },
-            { val: pulse1, op: pulse1Op, extra: 40 },
-          ].map(({ val, op, extra }, i) => (
-            <Animated.View key={i} style={[s.pulseRing, {
-              width: SIZE + extra, height: SIZE + extra,
-              borderRadius: (SIZE + extra) / 2,
-              transform: [{ scale: val }], opacity: op,
-            }]} />
+        <View className="items-center justify-center mt-10 mb-7" style={{ height: SIZE + 100 }}>
+          {/* Radiating concentric circles */}
+          {[1.2, 1.4, 1.6].map((scaleFactor, i) => (
+            <Animated.View
+              key={i}
+              className="absolute bg-rose-500/40"
+              style={{
+                width: SIZE,
+                height: SIZE,
+                borderRadius: SIZE / 2,
+                transform: [{ scale: Animated.multiply(pulse1, scaleFactor) }],
+                opacity: Animated.multiply(pulse1Op, 1 / (i + 1)),
+              }}
+            />
           ))}
 
           <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onLongPress={handleLongPress} delayLongPress={800}>
             <Animated.View style={{ transform: [{ scale }] }}>
-              <View style={[s.layer1, { width: SIZE, height: SIZE, borderRadius: SIZE / 2 }]}>
-                <Animated.View style={[s.ripple, { width: SIZE, height: SIZE, borderRadius: SIZE / 2, transform: [{ scale: rippleScale }], opacity: rippleOp }]} />
-                <View style={[s.layer2, { width: L2, height: L2, borderRadius: L2 / 2 }]}>
-                  <LinearGradient colors={['#FF3318', '#FF6B18', '#FFAA1C']} start={{ x: 0.1, y: 0.1 }} end={{ x: 0.9, y: 0.9 }} style={[s.center, { width: L3, height: L3, borderRadius: L3 / 2 }]}>
-                    <LinearGradient colors={['#FFAA1C', '#FF8C18', '#FF3318']} start={{ x: 0.3, y: 0.3 }} end={{ x: 1, y: 1 }} style={[s.center, { width: L4, height: L4, borderRadius: L4 / 2 }]}>
-                      <Text style={s.sosText}>SOS</Text>
-                    </LinearGradient>
-                  </LinearGradient>
-                </View>
-                <View style={s.gloss} />
+              <View 
+                className="bg-white items-center justify-center overflow-hidden shadow-2xl elevation-24"
+                style={{ width: SIZE + 16, height: SIZE + 16, borderRadius: (SIZE + 16) / 2 }}
+              >
+                {/* Inner Shadow for white circle */}
+                <LinearGradient
+                  colors={['rgba(0,0,0,0.1)', 'transparent']}
+                  className="absolute inset-0"
+                  style={{ borderRadius: (SIZE + 16) / 2 }}
+                />
+                
+                <LinearGradient
+                  colors={['#FF4B2B', '#FF416C']}
+                  className="items-center justify-center border-2 border-white/20 overflow-hidden"
+                  style={{ width: SIZE, height: SIZE, borderRadius: SIZE / 2 }}
+                >
+                  {/* Inner Concentric Rings */}
+                  <View 
+                    className="absolute border border-white/15" 
+                    style={{ width: SIZE * 0.85, height: SIZE * 0.85, borderRadius: (SIZE * 0.85) / 2 }} 
+                  />
+                  <View 
+                    className="absolute border border-white/15" 
+                    style={{ width: SIZE * 0.7, height: SIZE * 0.7, borderRadius: (SIZE * 0.7) / 2 }} 
+                  />
+                  
+                  <Text 
+                    className="text-[48px] font-black text-white tracking-[2px]"
+                    style={{
+                      textShadowColor: 'rgba(0, 0, 0, 0.3)',
+                      textShadowOffset: { width: 0, height: 2 },
+                      textShadowRadius: 4,
+                    }}
+                  >
+                    SOS
+                  </Text>
+                </LinearGradient>
               </View>
             </Animated.View>
           </Pressable>
@@ -182,26 +208,9 @@ export default function HomeScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFF' },
   screen: { flex: 1, paddingHorizontal: 24, paddingBottom: 24 },
+  // Ambient Glow
   ambientGlow: { position: 'absolute', top: '30%', left: '50%', marginLeft: -200, width: 400, height: 400, borderRadius: 200, backgroundColor: 'rgba(255,51,24,0.04)' },
 
-  // Header
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  logo: { width: 46, height: 46 },
-  mabuhay: { fontSize: 11, fontWeight: '700', color: '#FF6B18', letterSpacing: 1.5, textTransform: 'uppercase' },
-  name: { fontSize: 17, fontWeight: '800', color: '#111827', marginTop: 1 },
-  notifBtn: { width: 44, height: 44, backgroundColor: '#F3F4F6', borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E5E7EB' },
-  notifDot: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, backgroundColor: '#FF3318', borderRadius: 4, borderWidth: 2, borderColor: '#FFF' },
-
-  // SOS
-  sosArea: { alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 28, height: SIZE + 80 },
-  pulseRing: { position: 'absolute', backgroundColor: 'rgba(255,51,24,0.15)' },
-  layer1: { backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#FF3318', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.25, shadowRadius: 32, elevation: 20, overflow: 'hidden' },
-  ripple: { position: 'absolute', borderWidth: 3, borderColor: 'rgba(255,51,24,0.3)', backgroundColor: 'transparent' },
-  layer2: { backgroundColor: '#FF3318', alignItems: 'center', justifyContent: 'center' },
-  center: { alignItems: 'center', justifyContent: 'center' },
-  sosText: { fontSize: 36, fontWeight: '900', color: '#FFF', letterSpacing: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4 },
-  gloss: { position: 'absolute', top: '8%', right: '8%', width: '38%', height: '32%', backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 999, transform: [{ rotate: '-20deg' }, { scaleX: 1.2 }], opacity: 0.7 },
 
   // Help
   helpWrap: { alignItems: 'center', paddingHorizontal: 8, marginBottom: 24 },

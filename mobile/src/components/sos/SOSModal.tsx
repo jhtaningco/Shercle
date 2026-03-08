@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Text, Modal, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import ReAnimated, {
+import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
-  runOnJS, interpolate, Extrapolate,
+  interpolate, Extrapolation,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
+import { scheduleOnRN } from 'react-native-worklets';
 
 const { width } = Dimensions.get('window');
 const SLIDER_WIDTH = width - 96;
@@ -70,30 +71,40 @@ const ring = StyleSheet.create({
 // ─── Slide to Cancel (RIGHT → LEFT) ─────────────────────────────────────────
 function SlideToCancel({ onCancel }: { onCancel: () => void }) {
   const x = useSharedValue(TRAVEL);
+  const startX = useSharedValue(0);
 
   const gesture = Gesture.Pan()
-    .onChange((e) => { x.value = Math.max(0, Math.min(TRAVEL, TRAVEL + e.translationX)); })
+    .onBegin(() => {
+      startX.value = x.value;
+    })
+    .onChange((e) => {
+      x.value = Math.max(0, Math.min(TRAVEL, startX.value + e.translationX));
+    })
     .onEnd(() => {
-      if (x.value < TRAVEL * 0.2) { x.value = withSpring(0); runOnJS(onCancel)(); }
-      else x.value = withSpring(TRAVEL);
+      if (x.value < TRAVEL * 0.25) {
+        x.value = withSpring(0);
+        scheduleOnRN(onCancel);
+      } else {
+        x.value = withSpring(TRAVEL);
+      }
     });
 
   const handleStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
-  const textStyle = useAnimatedStyle(() => ({ opacity: interpolate(x.value, [TRAVEL * 0.5, TRAVEL], [0, 1], Extrapolate.CLAMP) }));
-  const fillStyle = useAnimatedStyle(() => ({ width: interpolate(x.value, [0, TRAVEL], [TRAVEL, 0], Extrapolate.CLAMP) }));
+  const textStyle = useAnimatedStyle(() => ({ opacity: interpolate(x.value, [TRAVEL * 0.5, TRAVEL], [0, 1], Extrapolation.CLAMP) }));
+  const fillStyle = useAnimatedStyle(() => ({ width: interpolate(x.value, [0, TRAVEL], [TRAVEL, 0], Extrapolation.CLAMP) }));
 
   return (
-    <View style={slider.track}>
-      <ReAnimated.View style={[slider.fill, fillStyle]} />
-      <ReAnimated.Text style={[slider.hint, textStyle]}>← Slide to Cancel</ReAnimated.Text>
-      <GestureDetector gesture={gesture}>
-        <ReAnimated.View style={[slider.handle, handleStyle]}>
+    <GestureDetector gesture={gesture}>
+      <View style={slider.track}>
+        <Animated.View style={[slider.fill, fillStyle]} />
+        <Animated.Text style={[slider.hint, textStyle]}>← Slide to Cancel</Animated.Text>
+        <Animated.View style={[slider.handle, handleStyle]}>
           <LinearGradient colors={['#FF6B18', '#FF3318']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={slider.gradient}>
             <Ionicons name="close-outline" size={28} color="#FFF" />
           </LinearGradient>
-        </ReAnimated.View>
-      </GestureDetector>
-    </View>
+        </Animated.View>
+      </View>
+    </GestureDetector>
   );
 }
 
@@ -111,32 +122,34 @@ type Props = { visible: boolean; countdown: number; onCancel: () => void };
 export default function SOSModal({ visible, countdown, onCancel }: Props) {
   return (
     <Modal animationType="fade" transparent visible={visible} onRequestClose={onCancel}>
-      <View style={s.overlay}>
-        <View style={s.sheet}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View style={s.overlay}>
+          <View style={s.sheet}>
 
-          <View style={s.badge}>
-            <View style={s.badgeDot} />
-            <Text style={s.badgeLabel}>EMERGENCY ALERT</Text>
+            <View style={s.badge}>
+              <View style={s.badgeDot} />
+              <Text style={s.badgeLabel}>EMERGENCY ALERT</Text>
+            </View>
+
+            <View style={s.warnWrap}>
+              <Ionicons name="warning-outline" size={36} color="#FF3318" />
+            </View>
+
+            <View style={s.titleBlock}>
+              <Text style={s.title}>SOS Activated!</Text>
+              <Text style={s.subtitle}>Your circle of care will be notified in</Text>
+            </View>
+
+            <CountdownRing current={countdown} visible={visible} />
+
+            <View style={s.divider} />
+
+            <SlideToCancel onCancel={onCancel} />
+
+            <Text style={s.finePrint}>Authorities may be contacted automatically</Text>
           </View>
-
-          <View style={s.warnWrap}>
-            <Ionicons name="warning-outline" size={36} color="#FF3318" />
-          </View>
-
-          <View style={s.titleBlock}>
-            <Text style={s.title}>SOS Activated!</Text>
-            <Text style={s.subtitle}>Your circle of care will be notified in</Text>
-          </View>
-
-          <CountdownRing current={countdown} visible={visible} />
-
-          <View style={s.divider} />
-
-          <SlideToCancel onCancel={onCancel} />
-
-          <Text style={s.finePrint}>Authorities may be contacted automatically</Text>
         </View>
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
