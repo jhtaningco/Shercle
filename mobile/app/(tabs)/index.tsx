@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity,
   Switch, Animated, StyleSheet, Pressable, Dimensions, Image, Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import SOSModal from '@/src/components/sos/SOSModal';
@@ -11,12 +12,16 @@ import { Header } from '@/src/components/common/Header';
 
 
 const { width } = Dimensions.get('window');
-const SIZE = 276;
+const SIZE = Math.min(width * 0.58, 240);
 const L2 = SIZE * 0.87;
 const L3 = SIZE * 0.70;
 const L4 = SIZE * 0.54;
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+  // Tab bar (70) + Gap (20) + Safe Area + Extra Breathing (30) = 120 + insets.bottom
+  const bottomPad = 120 + insets.bottom;
+
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [sosVisible, setSosVisible] = useState(false);
   const [countdown, setCountdown] = useState(10);
@@ -90,7 +95,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
-      <View style={s.screen}>
+      <View style={[s.screen, { paddingBottom: bottomPad }]}>
         <View style={s.ambientGlow} />
 
         {/* Header */}
@@ -208,9 +213,26 @@ export default function HomeScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFF' },
   screen: { flex: 1, paddingHorizontal: 24, paddingBottom: 24 },
-  // Ambient Glow
   ambientGlow: { position: 'absolute', top: '30%', left: '50%', marginLeft: -200, width: 400, height: 400, borderRadius: 200, backgroundColor: 'rgba(255,51,24,0.04)' },
 
+  // Header
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
+  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  logo: { width: 46, height: 46 },
+  mabuhay: { fontSize: 11, fontWeight: '700', color: '#FF6B18', letterSpacing: 1.5, textTransform: 'uppercase' },
+  name: { fontSize: 17, fontWeight: '800', color: '#111827', marginTop: 1 },
+  notifBtn: { width: 44, height: 44, backgroundColor: '#F3F4F6', borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E5E7EB' },
+  notifDot: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, backgroundColor: '#FF3318', borderRadius: 4, borderWidth: 2, borderColor: '#FFF' },
+
+  // SOS
+  sosArea: { alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 28, height: SIZE + 80 },
+  pulseRing: { position: 'absolute', backgroundColor: 'rgba(255,51,24,0.15)' },
+  layer1: { backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#FF3318', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.25, shadowRadius: 32, elevation: 20, overflow: 'hidden' },
+  ripple: { position: 'absolute', borderWidth: 3, borderColor: 'rgba(255,51,24,0.3)', backgroundColor: 'transparent' },
+  layer2: { backgroundColor: '#FF3318', alignItems: 'center', justifyContent: 'center' },
+  center: { alignItems: 'center', justifyContent: 'center' },
+  sosText: { fontSize: 36, fontWeight: '900', color: '#FFF', letterSpacing: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4 },
+  gloss: { position: 'absolute', top: '8%', right: '8%', width: '38%', height: '32%', backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 999, transform: [{ rotate: '-20deg' }, { scaleX: 1.2 }], opacity: 0.7 },
 
   // Help
   helpWrap: { alignItems: 'center', paddingHorizontal: 8, marginBottom: 24 },
