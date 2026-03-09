@@ -20,11 +20,7 @@ type pageProps = {
 
 export default async function Page(props: pageProps) {
   const searchParams = await props.searchParams;
-  // Allow nested RSCs to access the search params (in a type-safe way)
   searchParamsCache.parse(searchParams);
-
-  // This key is used for invoke suspense if any of the search params changed (used for filters).
-  // const key = serialize({ ...searchParams });
 
   return (
     <PageContainer
@@ -34,7 +30,7 @@ export default async function Page(props: pageProps) {
       infoContent={productInfoContent}
       pageHeaderAction={
         <Link
-          href='/dashboard/product/new'
+          href='/product/new'
           className={cn(buttonVariants(), 'text-xs md:text-sm')}
         >
           <IconPlus className='mr-2 h-4 w-4' /> Add New
@@ -42,7 +38,6 @@ export default async function Page(props: pageProps) {
       }
     >
       <Suspense
-        // key={key}
         fallback={
           <DataTableSkeleton columnCount={5} rowCount={8} filterCount={2} />
         }

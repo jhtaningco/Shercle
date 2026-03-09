@@ -15,9 +15,17 @@ export const navItems: NavItem[] = [
   },
   {
     title: 'Product',
-    url: '/dashboard/product',
+    url: '/product',
     icon: 'product',
     shortcut: ['p', 'p'],
+    isActive: false,
+    items: []
+  },
+  {
+    title: 'Barangay Officials',
+    url: '/barangay-officials',
+    icon: 'userPen',
+    shortcut: ['b', 'o'],
     isActive: false,
     items: []
   },
