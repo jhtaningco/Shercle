@@ -1,3 +1,4 @@
+// c:\Users\Gian Adoc\Documents\e-gov\Shercle\web\src\lib\supabase\cdrrmo-sos.ts
 import { SupabaseClient } from '@supabase/supabase-js';
 import { SOSAlertWithDetails, SOSRemarkWithAuthor, SOSStatus } from '@/types/cdrrmo-sos';
 
@@ -6,7 +7,7 @@ export async function getActiveSOSAlerts(supabase: SupabaseClient): Promise<SOSA
     .from('sos_alerts')
     .select(`
       *,
-      profiles:citizen_id(first_name, last_name, email, role),
+      profiles:citizen_id(first_name, last_name, email),
       barangays:barangay_id(name, contact_number)
     `)
     .order('created_at', { ascending: false });
@@ -14,6 +15,25 @@ export async function getActiveSOSAlerts(supabase: SupabaseClient): Promise<SOSA
   if (error) {
     console.error('Error fetching active SOS alerts:', error);
     return [];
+  }
+
+  // Augment with roles from user_roles
+  const citizenIds = Array.from(new Set(data.map(r => r.citizen_id)));
+  if (citizenIds.length > 0) {
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('auth_user_id, role')
+      .in('auth_user_id', citizenIds);
+      
+    const roleMap = Object.fromEntries(
+      (rolesData || []).map(r => [r.auth_user_id, r.role])
+    );
+    
+    data.forEach(r => {
+      if (r.profiles) {
+        (r.profiles as any).role = roleMap[r.citizen_id] || 'citizen';
+      }
+    });
   }
 
   return data as unknown as SOSAlertWithDetails[];
@@ -24,7 +44,7 @@ export async function getSOSRemarks(supabase: SupabaseClient, sosId: string): Pr
     .from('sos_remarks')
     .select(`
       *,
-      profiles:author_id(first_name, last_name, role)
+      profiles:author_id(first_name, last_name)
     `)
     .eq('sos_id', sosId)
     .order('created_at', { ascending: true });
@@ -34,55 +54,27 @@ export async function getSOSRemarks(supabase: SupabaseClient, sosId: string): Pr
     return [];
   }
 
+  // Augment with roles from user_roles
+  const authorIds = Array.from(new Set(data.map(r => r.author_id)));
+  if (authorIds.length > 0) {
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('auth_user_id, role')
+      .in('auth_user_id', authorIds);
+      
+    const roleMap = Object.fromEntries(
+      (rolesData || []).map(r => [r.auth_user_id, r.role])
+    );
+    
+    data.forEach(r => {
+      if (r.profiles) {
+        (r.profiles as any).role = roleMap[r.author_id] || 'citizen';
+      }
+    });
+  }
+
   return data as unknown as SOSRemarkWithAuthor[];
 }
 
-export async function updateSOSStatus(supabase: SupabaseClient, sosId: string, status: SOSStatus) {
-  const { data, error } = await supabase
-    .from('sos_alerts')
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', sosId)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error updating SOS status:', error);
-    throw error;
-  }
-  return data;
-}
-
-export async function updateSOSLegitimacy(supabase: SupabaseClient, sosId: string, is_legit: boolean) {
-  const { data, error } = await supabase
-    .from('sos_alerts')
-    .update({ is_legit, updated_at: new Date().toISOString() })
-    .eq('id', sosId)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error updating SOS legitimacy:', error);
-    throw error;
-  }
-  return data;
-}
-
-export async function addSOSRemark(supabase: SupabaseClient, sosId: string, authorId: string, remark: string) {
-  const { data, error } = await supabase
-    .from('sos_remarks')
-    .insert([
-      {
-        sos_id: sosId,
-        author_id: authorId,
-        remark: remark
-      }
-    ])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error adding SOS remark:', error);
-    throw error;
-  }
-  return data;
-}
+// REMOVED: CDRRMO cannot update SOS status/legit — view only
+// Removed updateSOSStatus, updateSOSLegitimacy, and addSOSRemark

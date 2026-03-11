@@ -76,10 +76,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Now insert the official into our cdrrmo_officials table with auth_user_id as null and default 'pending' status
+    // Insert mapping into user_roles table
+    const { error: roleError } = await authSupabase.from('user_roles').insert({
+      auth_user_id: authData.user.id,
+      role: 'cdrrmo'
+    });
+
+    if (roleError) {
+      return NextResponse.json(
+        { error: `Error assigning user role: ${roleError.message}` },
+        { status: 500 }
+      );
+    }
+
+    // Now insert the official into our cdrrmo_officials table
     const { password: _pw, confirm_password: _cpw, ...officialData } = body;
     const officialPayload = {
       ...officialData,
+      auth_user_id: authData.user.id,
       status: 'pending' // Enforce pending status until email confirmation
     };
 

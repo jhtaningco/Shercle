@@ -25,12 +25,29 @@ function MapBounds({ alerts }: { alerts: SOSAlertWithDetails[] }) {
 
 // Custom markers using standard SVG data URIs so we don't need external image files
 const createCustomIcon = (color: string, isPulsing: boolean) => {
-    const pulseClass = isPulsing ? 'animate-pulse' : '';
+    // Make pulsing (active) pins much larger and more prominent
+    const baseSize = isPulsing ? 'w-10 h-10' : 'w-6 h-6';
+    const innerSize = isPulsing ? 'w-3 h-3' : 'w-2 h-2';
     
+    // Instead of a solid background that might render black, we use a glowing shadow 
+    // and an explicit background color definition using inline styles on the pulse ring.
+    if (isPulsing) {
+        return L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div class="-translate-x-1/2 -translate-y-full relative flex items-center justify-center ${baseSize}">
+                      <span class="absolute inline-flex h-full w-full rounded-full opacity-75 animate-[ping_1.5s_cubic-bezier(0,0,0.2,1)_infinite]" style="background-color: ${color};"></span>
+                      <span class="relative inline-flex rounded-full border-2 border-white shadow-lg ${innerSize}" style="background-color: ${color};"></span>
+                   </div>`,
+            iconSize: [40, 40],
+            iconAnchor: [20, 40],
+            popupAnchor: [0, -40]
+        });
+    }
+
     return L.divIcon({
         className: 'custom-div-icon',
-        html: `<div class="-mt-6 -ml-3 w-6 h-6 rounded-full flex items-center justify-center opacity-90 shadow-lg ${pulseClass}" style="background-color: ${color}; border: 2px solid white;">
-                  <span class="w-2 h-2 rounded-full bg-white opacity-80" />
+        html: `<div class="-translate-x-1/2 -translate-y-full rounded-full flex items-center justify-center opacity-90 shadow-lg ${baseSize}" style="background-color: ${color}; border: 2px solid white;">
+                  <span class="${innerSize} rounded-full bg-white opacity-90 shadow-sm" />
                </div>`,
         iconSize: [24, 24],
         iconAnchor: [12, 24],

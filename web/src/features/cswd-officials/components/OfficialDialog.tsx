@@ -39,9 +39,7 @@ const getOfficialSchema = (isEdit: boolean) => z.object({
   contact_number: z
     .string()
     .regex(/^09\d{9}$/, 'Must be a valid PH mobile number (09XXXXXXXXX)'),
-  role: z.enum(['social_worker', 'staff'], {
-    required_error: 'Please select a role'
-  }),
+  role: z.enum(['social_worker', 'staff']),
   password: isEdit ? z.string().optional() : z.string().min(6, 'Password must be at least 6 characters'),
   confirm_password: isEdit ? z.string().optional() : z.string().min(1, 'Please confirm your password')
 }).superRefine((data, ctx) => {

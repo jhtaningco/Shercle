@@ -1,3 +1,4 @@
+// File: c:\Users\Gian Adoc\Documents\e-gov\Shercle\web\src\app\(dashboard)\cswd-inbox\components\chat-thread.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -12,7 +13,7 @@ import { ChevronDown, Send, Clock, MapPin, User, Calendar, FileText } from 'luci
 import { StatusBadge, ComplaintCategoryBadge, IncidentCategoryBadge } from './badges';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useSession } from 'next-auth/react'; // Adjust if auth uses Supabase exclusively
+
 
 type ChatThreadProps = {
   type: 'complaint' | 'incident';
@@ -49,7 +50,14 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
 
   useEffect(() => {
     // Scroll to bottom when messages change
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      const viewport = messagesEndRef.current.closest('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+      } else {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
     
     // Mark messages as read
     if (messages.length > 0 && conversationId) {
@@ -93,7 +101,11 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: msgTable, filter: `conversation_id=eq.${cid}` },
           (payload) => {
-            setMessages(prev => [...prev, payload.new as MessageDisplay]);
+            setMessages(prev => {
+              // Prevent duplicates if we already appended it locally
+              if (prev.some(m => m.id === payload.new.id)) return prev;
+              return [...prev, payload.new as MessageDisplay];
+            });
             onConversationUpdate();
           }
         )
@@ -139,14 +151,24 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
     const text = inputText.trim();
     setInputText('');
 
-    await supabase
+    const { data, error } = await supabase
       .from(msgTable)
       .insert({
         conversation_id: conversationId,
         sender_id: currentUserProfileId,
         message: text,
         is_read: false
+      })
+      .select()
+      .single();
+
+    if (!error && data) {
+      // FIXED: append to state after insert so message appears immediately
+      setMessages(prev => {
+        if (prev.some(m => m.id === data.id)) return prev;
+        return [...prev, data as MessageDisplay];
       });
+    }
       
     onConversationUpdate();
   }
@@ -162,9 +184,9 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
   }
 
   return (
-    <div className="flex flex-col h-full bg-card">
+    <div className="flex flex-col h-full bg-card overflow-hidden">
       {/* Header */}
-      <div className="border-b p-4 flex flex-col gap-4">
+      <div className="border-b p-4 flex flex-col gap-4 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-xl font-bold flex items-center gap-2">
@@ -238,7 +260,7 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 min-h-0 p-4">
         <div className="flex flex-col gap-4">
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-10">
@@ -285,7 +307,7 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-4 border-t bg-card mt-auto">
+      <div className="p-4 border-t bg-card flex-shrink-0 z-10">
         <form
           onSubmit={(e) => {
             e.preventDefault();

@@ -6,7 +6,7 @@ import { SOSAlertWithDetails, SOSStatus } from '@/types/cdrrmo-sos';
 import { getActiveSOSAlerts } from '@/lib/supabase/cdrrmo-sos';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Map, List, Bell, BellOff } from 'lucide-react';
+import { Map, List, Bell, BellOff, AlertTriangle } from 'lucide-react';
 import ListView from './list-view';
 import MapView from './map-view';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ export default function SOSDashboardClient() {
   const [loading, setLoading] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [showRedAlert, setShowRedAlert] = useState(false);
 
   const supabase = createClient();
 
@@ -49,6 +50,7 @@ export default function SOSDashboardClient() {
               playAlertSound();
             }
             showBrowserNotification();
+            setShowRedAlert(true); // Trigger the highly visible red alert state
             toast.error('New SOS Alert Received!', {
               description: 'A new emergency alert requires immediate attention.',
               duration: 10000,
@@ -95,9 +97,30 @@ export default function SOSDashboardClient() {
   const bogusCount = alerts.filter(a => a.status === 'bogus').length;
 
   return (
-    <div className="flex flex-col h-full gap-4">
+    <div className="flex flex-col h-full gap-4 relative">
+      
+      {/* Red Alert Banner */}
+      {showRedAlert && (
+          <div className="bg-red-600 text-white p-4 flex items-center justify-between shadow-lg rounded-lg border-2 border-red-400 animate-[pulse_2s_ease-in-out_infinite]">
+             <div className="flex items-center gap-4">
+                 <AlertTriangle className="w-8 h-8" />
+                 <div>
+                    <h2 className="text-xl font-black uppercase tracking-widest text-white drop-shadow-sm">Red Alert: New Emergency SOS</h2>
+                    <p className="text-sm opacity-90 font-medium">A new SOS signal has been triggered. Please review active cases immediately.</p>
+                 </div>
+             </div>
+             <Button 
+                 variant="secondary" 
+                 className="text-red-700 bg-white hover:bg-red-50 font-bold border-transparent" 
+                 onClick={() => setShowRedAlert(false)}
+             >
+                Acknowledge
+             </Button>
+          </div>
+      )}
+
       {/* Real-time Summary Bar */}
-      <div className="flex items-center justify-between p-4 bg-background border rounded-lg shadow-sm">
+      <div className={`flex items-center justify-between p-4 bg-background border rounded-lg shadow-sm transition-all duration-500 ${showRedAlert ? 'border-red-500 shadow-red-500/20' : ''}`}>
         <div className="flex items-center gap-6">
           <h1 className="text-xl font-bold">SOS Operations Monitor</h1>
           <div className="flex gap-4">

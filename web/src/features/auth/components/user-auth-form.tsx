@@ -55,11 +55,11 @@ export default function UserAuthForm() {
         throw new Error('No user data returned');
       }
 
-      // Fetch user role from profiles
-      const { data: profileError } = await supabase
-        .from('profiles')
+      // Fetch user role from user_roles
+      const { error: roleError } = await supabase
+        .from('user_roles')
         .select('role')
-        .eq('id', authData.user.id)
+        .eq('auth_user_id', authData.user.id)
         .single();
 
       // We don't strictly *need* to route here because the middleware will handle
