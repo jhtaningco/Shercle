@@ -7,40 +7,46 @@ import { NavItem } from '@/types';
 export const navItems: NavItem[] = [
   {
     title: 'Dashboard',
-    url: '/dashboard/overview',
+    url: '/overview',
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
-    items: []
+    items: [],
+    access: { role: 'cdrrmo' } // cicto has access to everything
   },
   {
-    title: 'Product',
-    url: '/product',
-    icon: 'product',
-    shortcut: ['p', 'p'],
+    title: 'SOS Dashboard',
+    url: '/cdrrmo-sos',
+    icon: 'warning',
     isActive: false,
-    items: []
+    access: { role: 'cdrrmo' }
   },
   {
     title: 'Barangay Officials',
     url: '/barangay-officials',
-    icon: 'userPen',
-    shortcut: ['b', 'o'],
+    icon: 'user',
     isActive: false,
-    items: []
+    access: { role: 'cicto' }
   },
   {
-    title: 'Account',
-    url: '#',
-    icon: 'account',
-    isActive: true,
-    items: [
-      {
-        title: 'Login',
-        shortcut: ['l', 'l'],
-        url: '/',
-        icon: 'login'
-      }
-    ]
+    title: 'CSWD Officials',
+    url: '/cswd-officials',
+    icon: 'userPen',
+    isActive: false,
+    access: { role: 'cicto' }
+  },
+  {
+    title: 'CDRRMO Officials',
+    url: '/cdrrmo-officials',
+    icon: 'employee',
+    isActive: false,
+    access: { role: 'cicto' }
+  },
+  {
+    title: 'CSWD Inbox',
+    url: '/cswd-inbox',
+    icon: 'message',
+    isActive: false,
+    access: { role: 'cswd' }
   }
 ];

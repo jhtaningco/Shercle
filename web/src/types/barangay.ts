@@ -25,18 +25,20 @@ export interface Barangay {
   district?: District;
 }
 
-export type OfficialRole = 'captain';
+export type OfficialRole = 'captain' | 'health_worker';
+export type OfficialStatus = 'pending' | 'active' | 'inactive';
 
 export interface BarangayOfficial {
   id: string;
   barangay_id: string;
-  auth_user_id?: string;
+  auth_user_id?: string | null;
   first_name: string;
   last_name: string;
-  middle_name?: string;
+  middle_name?: string | null;
   role: OfficialRole;
   email: string;
   contact_number: string;
+  status: OfficialStatus;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -45,12 +47,14 @@ export interface BarangayOfficial {
 
 export interface CreateOfficialInput {
   barangay_id: string;
+  auth_user_id?: string | null;
   first_name: string;
   last_name: string;
   middle_name?: string;
   role: OfficialRole;
   email: string;
   contact_number: string;
+  status?: OfficialStatus;
   is_active?: boolean;
 }
 

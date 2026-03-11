@@ -111,7 +111,15 @@ export async function toggleOfficialStatus(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('barangay_officials')
-    .update({ is_active: isActive, updated_at: new Date().toISOString() })
+    // Changing is_active determines if it's manually inactive or not
+    // We update both tracking fields to properly deactivate an account.
+    // If they were active or pending before deactivate, they become inactive.
+    // If they are reactivated, they become active (we assume email was confirmed if an admin reactivates them for now).
+    .update({ 
+      is_active: isActive, 
+      status: isActive ? 'active' : 'inactive',
+      updated_at: new Date().toISOString() 
+    })
     .eq('id', id)
     .select()
     .single();

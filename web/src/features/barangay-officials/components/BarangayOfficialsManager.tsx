@@ -11,6 +11,14 @@ import { BarangayOfficialsTable } from './BarangayOfficialsTable';
 import { BarangaySelector } from './BarangaySelector';
 import { OfficialConfirmDialog } from './OfficialConfirmDialog';
 import { OfficialDialog, type OfficialFormValues } from './OfficialDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 
 interface BarangayOfficialsManagerProps {
   districts: District[];
@@ -32,6 +40,7 @@ export function BarangayOfficialsManager({
     official: BarangayOfficial | null;
     mode: 'delete' | 'deactivate' | 'activate';
   }>({ open: false, official: null, mode: 'delete' });
+  const [verificationModal, setVerificationModal] = useState<{ open: boolean; email: string }>({ open: false, email: '' });
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchOfficials = useCallback(async (barangayId: string) => {
@@ -69,12 +78,13 @@ export function BarangayOfficialsManager({
       const res = await fetch('/api/barangay-officials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, barangay_id: selectedBarangay.id, role: 'captain' })
+        body: JSON.stringify({ ...values, barangay_id: selectedBarangay.id }) // `role` is now included in `values`
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to add official');
       setOfficials((prev) => [...prev, data]);
       setAddDialogOpen(false);
+      setVerificationModal({ open: true, email: values.email });
       toast.success('Official added successfully');
     } catch (err: any) {
       toast.error(err.message ?? 'An error occurred');
@@ -267,6 +277,22 @@ export function BarangayOfficialsManager({
         onConfirm={handleConfirmAction}
         loading={actionLoading}
       />
+
+      <Dialog open={verificationModal.open} onOpenChange={(open) => setVerificationModal(prev => ({ ...prev, open }))}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Account Created Successfully</DialogTitle>
+            <DialogDescription>
+              Account created successfully. A verification email has been sent to <span className="font-semibold text-foreground">{verificationModal.email}</span>. The official must verify their email before they can log in. Please also hand over their login credentials to them in person.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-end">
+            <Button type="button" onClick={() => setVerificationModal(prev => ({ ...prev, open: false }))}>
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

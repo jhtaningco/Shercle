@@ -25,7 +25,8 @@ import {
   IconEdit,
   IconPower,
   IconTrash,
-  IconX
+  IconX,
+  IconClockHour4
 } from '@tabler/icons-react';
 
 interface BarangayOfficialsTableProps {
@@ -126,9 +127,15 @@ export function BarangayOfficialsTable({
 
                 {/* Role badge */}
                 <TableCell>
-                  <Badge className='bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400'>
-                    Captain
-                  </Badge>
+                  {official.role === 'captain' ? (
+                    <Badge className='bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400'>
+                      Captain
+                    </Badge>
+                  ) : (
+                    <Badge className='bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400'>
+                      Health Worker
+                    </Badge>
+                  )}
                 </TableCell>
 
                 {/* Email */}
@@ -143,21 +150,29 @@ export function BarangayOfficialsTable({
 
                 {/* Status */}
                 <TableCell>
-                  {official.is_active ? (
-                    <Badge
-                      variant='outline'
-                      className='border-green-400 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                    >
-                      <IconCheck className='mr-1 h-3 w-3' />
-                      Active
-                    </Badge>
-                  ) : (
+                  {!official.is_active || official.status === 'inactive' ? (
                     <Badge
                       variant='outline'
                       className='border-gray-300 bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                     >
                       <IconX className='mr-1 h-3 w-3' />
                       Inactive
+                    </Badge>
+                  ) : official.status === 'pending' ? (
+                    <Badge
+                      variant='outline'
+                      className='border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800/50 dark:bg-amber-900/20 dark:text-amber-400'
+                    >
+                      <IconClockHour4 className='mr-1 h-3 w-3' />
+                      Pending
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant='outline'
+                      className='border-green-400 bg-green-50 text-green-700 dark:border-green-800/50 dark:bg-green-900/20 dark:text-green-400'
+                    >
+                      <IconCheck className='mr-1 h-3 w-3' />
+                      Active
                     </Badge>
                   )}
                 </TableCell>

@@ -19,22 +19,42 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { BarangayOfficial } from '@/types/barangay';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-const officialSchema = z.object({
+const getOfficialSchema = (isEdit: boolean) => z.object({
   first_name: z.string().min(2, 'First name must be at least 2 characters'),
   last_name: z.string().min(2, 'Last name must be at least 2 characters'),
   middle_name: z.string().optional(),
   email: z.string().email('Invalid email address'),
   contact_number: z
     .string()
-    .regex(/^09\d{9}$/, 'Must be a valid PH mobile number (09XXXXXXXXX)')
+    .regex(/^09\d{9}$/, 'Must be a valid PH mobile number (09XXXXXXXXX)'),
+  role: z.enum(['captain', 'health_worker'], {
+    required_error: 'Please select a role'
+  }),
+  password: isEdit ? z.string().optional() : z.string().min(6, 'Password must be at least 6 characters'),
+  confirm_password: isEdit ? z.string().optional() : z.string().min(1, 'Please confirm your password')
+}).superRefine((data, ctx) => {
+  if (data.password !== data.confirm_password) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Passwords don't match",
+      path: ['confirm_password']
+    });
+  }
 });
 
-export type OfficialFormValues = z.infer<typeof officialSchema>;
+export type OfficialFormValues = z.infer<ReturnType<typeof getOfficialSchema>>;
 
 interface OfficialDialogProps {
   open: boolean;
@@ -56,13 +76,14 @@ export function OfficialDialog({
   const isEdit = !!official;
 
   const form = useForm<OfficialFormValues>({
-    resolver: zodResolver(officialSchema),
+    resolver: zodResolver(getOfficialSchema(isEdit)),
     defaultValues: {
       first_name: official?.first_name ?? '',
       last_name: official?.last_name ?? '',
       middle_name: official?.middle_name ?? '',
       email: official?.email ?? '',
-      contact_number: official?.contact_number ?? ''
+      contact_number: official?.contact_number ?? '',
+      role: official?.role ?? 'health_worker'
     }
   });
 
@@ -96,13 +117,34 @@ export function OfficialDialog({
           onSubmit={form.handleSubmit(handleSubmit)}
           className='space-y-4'
         >
-          {/* Role — always Captain, shown as read-only badge */}
-          <div className='flex items-center gap-3'>
-            <span className='text-sm font-medium'>Role</span>
-            <Badge className='bg-red-100 text-red-800 hover:bg-red-100'>
-              Captain
-            </Badge>
-          </div>
+          {/* Role */}
+          <FormField
+            control={form.control}
+            name='role'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Role <span className='text-destructive'>*</span>
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={isEdit} // You shouldn't typically change a user's fundamental role after creation
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select a role' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='captain'>Captain</SelectItem>
+                    <SelectItem value='health_worker'>Health Worker</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {/* Name row */}
           <div className='grid grid-cols-2 gap-3'>
@@ -195,6 +237,42 @@ export function OfficialDialog({
               </FormItem>
             )}
           />
+
+          {/* Passwords (only on create) */}
+          {!isEdit && (
+            <div className='grid grid-cols-2 gap-3'>
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Password <span className='text-destructive'>*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input type='password' placeholder='******' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='confirm_password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Confirm Password <span className='text-destructive'>*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input type='password' placeholder='******' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
 
           <DialogFooter className='pt-2'>
             <Button
