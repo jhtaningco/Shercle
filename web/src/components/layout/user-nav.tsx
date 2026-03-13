@@ -26,14 +26,20 @@ export function UserNav() {
       if (authUser) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name, role')
+          .select('first_name, last_name')
           .eq('id', authUser.id)
+          .single();
+          
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('auth_user_id', authUser.id)
           .single();
         
         setUser({
           name: profile ? `${profile.first_name} ${profile.last_name}` : 'User',
           email: authUser.email || '',
-          role: profile?.role || 'user'
+          role: userRole?.role || 'citizen'
         });
       }
     };

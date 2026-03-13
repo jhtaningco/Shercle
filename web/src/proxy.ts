@@ -57,19 +57,19 @@ export async function proxy(request: NextRequest) {
 
   // If user IS logged in and tries to access /auth pages, redirect away
   if (user && path.startsWith('/auth')) {
-    const { data: profile } = await supabase
-      .from('profiles')
+    const { data: userRole } = await supabase
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
+      .eq('auth_user_id', user.id)
       .single();
 
-    const role = profile?.role || 'citizen';
+    const role = userRole?.role || 'citizen';
     const url = request.nextUrl.clone();
 
     if (role === 'cicto') {
       url.pathname = '/overview';
     } else if (role === 'cdrrmo') {
-      url.pathname = '/overview';
+      url.pathname = '/cdrrmo-sos';
     } else if (role === 'cswd') {
       url.pathname = '/cswd-inbox';
     } else {
@@ -82,13 +82,13 @@ export async function proxy(request: NextRequest) {
   // If user IS logged in and accessing protected pages (not starting with /auth, /unauthorized, etc)
   if (user && !path.startsWith('/auth')) {
     // Fetch user profile to check role
-    const { data: profile } = await supabase
-      .from('profiles')
+    const { data: userRole } = await supabase
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
+      .eq('auth_user_id', user.id)
       .single();
 
-    const role = profile?.role || 'citizen';
+    const role = userRole?.role || 'citizen';
 
     // Citizens and barangay have no access to the web dashboard at all
     if (role === 'citizen' || role === 'barangay') {
@@ -108,9 +108,9 @@ export async function proxy(request: NextRequest) {
     } else {
       // CDRRMO rules
       if (role === 'cdrrmo') {
-         if (path === '/') {
+         if (path === '/' || path === '/overview') {
             const url = request.nextUrl.clone();
-            url.pathname = '/overview';
+            url.pathname = '/cdrrmo-sos';
             return NextResponse.redirect(url);
          } else if(path.startsWith('/cdrrmo-officials') || path.startsWith('/cswd-officials') || path.startsWith('/barangay-officials') || path.startsWith('/cswd-inbox')) {
              const url = request.nextUrl.clone();

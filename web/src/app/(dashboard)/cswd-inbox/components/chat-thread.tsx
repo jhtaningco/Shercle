@@ -1,18 +1,16 @@
+// File: c:\Users\Gian Adoc\Documents\e-gov\Shercle\web\src\app\(dashboard)\cswd-inbox\components\chat-thread.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { CaseStatus, Complaint, IncidentReport, Profile } from '@/types/inbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Send, Clock, MapPin, User, Calendar, FileText } from 'lucide-react';
+import { MapPin, User, Calendar, FileText, Eye } from 'lucide-react';
 import { StatusBadge, ComplaintCategoryBadge, IncidentCategoryBadge } from './badges';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useSession } from 'next-auth/react'; // Adjust if auth uses Supabase exclusively
+
 
 type ChatThreadProps = {
   type: 'complaint' | 'incident';
@@ -31,7 +29,6 @@ type MessageDisplay = {
 
 export function ChatThread({ type, caseData, currentUserProfileId, onConversationUpdate }: ChatThreadProps) {
   const [messages, setMessages] = useState<MessageDisplay[]>([]);
-  const [inputText, setInputText] = useState('');
   const [conversationId, setConversationId] = useState<string | null>(null);
   const supabase = createClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -49,7 +46,14 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
 
   useEffect(() => {
     // Scroll to bottom when messages change
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      const viewport = messagesEndRef.current.closest('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+      } else {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
     
     // Mark messages as read
     if (messages.length > 0 && conversationId) {
@@ -93,7 +97,11 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: msgTable, filter: `conversation_id=eq.${cid}` },
           (payload) => {
-            setMessages(prev => [...prev, payload.new as MessageDisplay]);
+            setMessages(prev => {
+              // Prevent duplicates if we already appended it locally
+              if (prev.some(m => m.id === payload.new.id)) return prev;
+              return [...prev, payload.new as MessageDisplay];
+            });
             onConversationUpdate();
           }
         )
@@ -132,39 +140,12 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
     onConversationUpdate(); // Refresh the dots
   }
 
-  async function sendMessage() {
-    if (!inputText.trim() || !conversationId) return;
-    
-    const msgTable = isComplaint ? 'complaint_messages' : 'incident_messages';
-    const text = inputText.trim();
-    setInputText('');
-
-    await supabase
-      .from(msgTable)
-      .insert({
-        conversation_id: conversationId,
-        sender_id: currentUserProfileId,
-        message: text,
-        is_read: false
-      });
-      
-    onConversationUpdate();
-  }
-
-  async function updateStatus(newStatus: CaseStatus) {
-    const table = isComplaint ? 'complaints' : 'incident_reports';
-    await supabase
-      .from(table)
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq('id', caseId);
-      
-    onConversationUpdate();
-  }
+  // CSWD is view-only — no sendMessage or updateStatus functions needed
 
   return (
-    <div className="flex flex-col h-full bg-card">
+    <div className="flex flex-col h-full bg-card overflow-hidden">
       {/* Header */}
-      <div className="border-b p-4 flex flex-col gap-4">
+      <div className="border-b p-4 flex flex-col gap-4 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-xl font-bold flex items-center gap-2">
@@ -179,20 +160,7 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
               <StatusBadge status={caseData.status} />
             </div>
           </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="ml-auto">
-                Update Status <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => updateStatus('pending')}>Pending</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateStatus('ongoing')}>Ongoing</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateStatus('resolved')}>Resolved</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateStatus('dismissed')}>Dismissed</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* CSWD is view-only — no status update dropdown */}
         </div>
 
         {/* Collapsible details section, for now just expanded */}
@@ -238,11 +206,11 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 min-h-0 p-4">
         <div className="flex flex-col gap-4">
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-10">
-              No messages yet. Send a message to start the conversation.
+              No messages yet in this conversation.
             </div>
           ) : (
             messages.map((msg) => {
@@ -260,7 +228,7 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
                 >
                   <div className="flex items-center gap-2 mb-1">
                      <span className="text-xs text-muted-foreground font-medium">
-                       {!isCitizen ? 'You (CSWD)' : (profile ? `${profile.first_name} ${profile.last_name}` : 'Citizen')}
+                       {isCitizen ? (profile ? `${profile.first_name} ${profile.last_name}` : 'Citizen') : 'Barangay'}
                      </span>
                      <span className="text-[10px] text-muted-foreground opacity-70">
                        {format(new Date(msg.created_at), 'p')}
@@ -270,7 +238,7 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
                     className={cn(
                       "px-4 py-2 rounded-2xl text-sm",
                       !isCitizen
-                        ? "bg-blue-600 text-white rounded-tr-sm"
+                        ? "bg-green-600 text-white rounded-tr-sm"
                         : "bg-muted text-foreground rounded-tl-sm"
                     )}
                   >
@@ -284,26 +252,10 @@ export function ChatThread({ type, caseData, currentUserProfileId, onConversatio
         </div>
       </ScrollArea>
 
-      {/* Input */}
-      <div className="p-4 border-t bg-card mt-auto">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            sendMessage();
-          }}
-          className="flex gap-2"
-        >
-          <Input
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1"
-          />
-          <Button type="submit" size="icon" disabled={!inputText.trim() || !conversationId}>
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Send message</span>
-          </Button>
-        </form>
+      {/* View-only notice — CSWD cannot send messages */}
+      <div className="p-3 border-t bg-muted/30 flex-shrink-0 z-10 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Eye className="h-4 w-4" />
+        <span>View only — this conversation is between the citizen and barangay</span>
       </div>
     </div>
   );

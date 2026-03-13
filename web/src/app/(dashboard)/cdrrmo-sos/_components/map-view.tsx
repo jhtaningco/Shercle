@@ -1,69 +1,106 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useState, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { SOSAlertWithDetails, SOSStatus } from '@/types/cdrrmo-sos';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
-import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-// Helper component to auto-center map bounds based on active points
-function MapBounds({ alerts }: { alerts: SOSAlertWithDetails[] }) {
+// Dynamically import react-leaflet components to avoid SSR "window is not defined" errors
+const MapContainer = dynamic(
+  () => import('react-leaflet').then(mod => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then(mod => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import('react-leaflet').then(mod => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(
+  () => import('react-leaflet').then(mod => mod.Popup),
+  { ssr: false }
+);
+
+// MapBounds as a separate client-only component
+function MapBoundsInner({ alerts }: { alerts: SOSAlertWithDetails[] }) {
+  const { useMap } = require('react-leaflet');
+  const L = require('leaflet');
   const map = useMap();
 
   useEffect(() => {
     if (alerts.length > 0) {
-      const bounds = L.latLngBounds(alerts.map(a => [a.latitude, a.longitude]));
+      const bounds = L.latLngBounds(alerts.map((a: SOSAlertWithDetails) => [a.latitude, a.longitude]));
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
     }
-  }, [alerts, map]);
+  }, [alerts, map, L]);
 
   return null;
 }
 
-// Custom markers using standard SVG data URIs so we don't need external image files
-const createCustomIcon = (color: string, isPulsing: boolean) => {
-    const pulseClass = isPulsing ? 'animate-pulse' : '';
+// Custom markers - created lazily on client only
+function createCustomIcon(L: typeof import('leaflet'), color: string, isPulsing: boolean) {
+    // Increased sizes: pulsing w-14 h-14, non-pulsing w-10 h-10
+    const baseSize = isPulsing ? 'w-14 h-14' : 'w-10 h-10';
+    const innerSize = isPulsing ? 'w-5 h-5' : 'w-3 h-3';
     
+    if (isPulsing) {
+        return L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div class="-translate-x-1/2 -translate-y-full relative flex items-center justify-center ${baseSize}">
+                      <span class="absolute inline-flex h-full w-full rounded-full opacity-75 animate-[ping_1.5s_cubic-bezier(0,0,0.2,1)_infinite]" style="background-color: ${color};"></span>
+                      <span class="relative inline-flex rounded-full border-2 border-white shadow-lg ${innerSize}" style="background-color: ${color};"></span>
+                   </div>`,
+            iconSize: [56, 56],
+            iconAnchor: [28, 56],
+            popupAnchor: [0, -56]
+        });
+    }
+
     return L.divIcon({
         className: 'custom-div-icon',
-        html: `<div class="-mt-6 -ml-3 w-6 h-6 rounded-full flex items-center justify-center opacity-90 shadow-lg ${pulseClass}" style="background-color: ${color}; border: 2px solid white;">
-                  <span class="w-2 h-2 rounded-full bg-white opacity-80" />
+        html: `<div class="-translate-x-1/2 -translate-y-full rounded-full flex items-center justify-center opacity-90 shadow-lg ${baseSize}" style="background-color: ${color}; border: 2px solid white;">
+                  <span class="${innerSize} rounded-full bg-white opacity-90 shadow-sm" />
                </div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 24],
-        popupAnchor: [0, -24]
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
     });
-};
-
-const iconMap: Record<SOSStatus, L.DivIcon> = {
-    active: createCustomIcon('#ef4444', true), // red pulsing
-    ongoing: createCustomIcon('#f97316', false), // orange
-    resolved: createCustomIcon('#22c55e', false), // green
-    bogus: createCustomIcon('#6b7280', false) // gray
-};
+}
 
 export default function MapView({ alerts, onViewDetails }: { alerts: SOSAlertWithDetails[], onViewDetails: (id: string) => void }) {
   const [showAll, setShowAll] = useState(false);
-  
-  // Render map only after mount to avoid hydration mismatch with window/document
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
      setMounted(true);
   }, []);
 
-  if (!mounted) {
+  // Create icons lazily on the client only
+  const iconMap = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    const L = require('leaflet');
+    return {
+      active: createCustomIcon(L, '#ef4444', true),
+      ongoing: createCustomIcon(L, '#f97316', false),
+      resolved: createCustomIcon(L, '#22c55e', false),
+      bogus: createCustomIcon(L, '#6b7280', false),
+    } as Record<SOSStatus, import('leaflet').DivIcon>;
+  }, []);
+
+  if (!mounted || !iconMap) {
       return <div className="flex-1 flex items-center justify-center bg-slate-100">Loading Map...</div>;
   }
 
-  // Filter alerts based on toggle
   const visibleAlerts = showAll 
      ? alerts 
      : alerts.filter(a => a.status === 'active' || a.status === 'ongoing');
 
-  const defaultCenter: [number, number] = [16.6159, 120.3167]; // Assuming San Fernando, La Union based on "Carlatan" mention
+  const defaultCenter: [number, number] = [16.6159, 120.3167];
 
   return (
     <div className="relative w-full h-full flex flex-col">
@@ -90,7 +127,7 @@ export default function MapView({ alerts, onViewDetails }: { alerts: SOSAlertWit
            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
          />
          
-         <MapBounds alerts={visibleAlerts} />
+         <MapBoundsInner alerts={visibleAlerts} />
 
          {visibleAlerts.map(alert => (
             <Marker 

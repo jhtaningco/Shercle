@@ -13,13 +13,13 @@ export function useFilteredNavItems(items: NavItem[]) {
     async function fetchRole() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
+        const { data: userRole } = await supabase
+          .from('user_roles')
           .select('role')
-          .eq('id', user.id)
+          .eq('auth_user_id', user.id)
           .single();
-        if (profile) {
-          setRole(profile.role);
+        if (userRole) {
+          setRole(userRole.role);
         }
       }
     }

@@ -10,9 +10,7 @@ export const navItems: NavItem[] = [
     url: '/overview',
     icon: 'dashboard',
     isActive: false,
-    shortcut: ['d', 'd'],
-    items: [],
-    access: { role: 'cdrrmo' } // cicto has access to everything
+    access: { role: 'cicto' } // The hook checks this. Let me check the hook
   },
   {
     title: 'SOS Dashboard',

@@ -1,21 +1,14 @@
+// c:\Users\Gian Adoc\Documents\e-gov\Shercle\web\src\app\(dashboard)\cdrrmo-sos\_components\detail-panel.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { SOSAlertWithDetails, SOSRemarkWithAuthor, SOSStatus } from '@/types/cdrrmo-sos';
-import { getSOSRemarks, updateSOSStatus, updateSOSLegitimacy, addSOSRemark } from '@/lib/supabase/cdrrmo-sos';
+import { getSOSRemarks } from '@/lib/supabase/cdrrmo-sos';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { ArrowLeft, ChevronDown, CheckCircle, XCircle, Send, MapPin, Phone, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, MapPin, Phone, User as UserIcon } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
-import { toast } from 'sonner';
 
 interface DetailPanelProps {
   alert: SOSAlertWithDetails;
@@ -24,8 +17,6 @@ interface DetailPanelProps {
 
 export default function DetailPanel({ alert, onBack }: DetailPanelProps) {
   const [remarks, setRemarks] = useState<SOSRemarkWithAuthor[]>([]);
-  const [newRemark, setNewRemark] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const supabase = createClient();
@@ -61,42 +52,8 @@ export default function DetailPanel({ alert, onBack }: DetailPanelProps) {
     }
   }, [remarks]);
 
-  const handleStatusChange = async (status: SOSStatus) => {
-      try {
-          await updateSOSStatus(supabase, alert.id, status);
-          toast.success(`Status updated to ${status}`);
-      } catch (error) {
-          toast.error('Failed to update status');
-      }
-  };
-
-  const handleLegitimacyChange = async (is_legit: boolean) => {
-      try {
-          await updateSOSLegitimacy(supabase, alert.id, is_legit);
-          toast.success(`Marked as ${is_legit ? 'Legit' : 'Bogus'}`);
-      } catch (error) {
-          toast.error('Failed to update legitimacy');
-      }
-  };
-
-  const submitRemark = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!newRemark.trim() || submitting) return;
-
-      setSubmitting(true);
-      try {
-          // Get current user session
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session?.user) throw new Error("Not authenticated");
-
-          await addSOSRemark(supabase, alert.id, session.user.id, newRemark.trim());
-          setNewRemark('');
-      } catch (error) {
-          toast.error('Failed to post remark');
-      } finally {
-          setSubmitting(false);
-      }
-  };
+  // REMOVED: CDRRMO cannot update SOS status/legit — view only
+  // Removed handleStatusChange, handleLegitimacyChange, and submitRemark
 
   const getStatusBadge = (status: SOSStatus) => {
       switch(status) {
@@ -132,34 +89,7 @@ export default function DetailPanel({ alert, onBack }: DetailPanelProps) {
                </div>
             </div>
 
-            <div className="flex gap-2">
-               {/* Legit/Bogus Toggles */}
-               {(alert.is_legit === null || alert.is_legit === false) && (
-                  <Button variant="outline" size="sm" onClick={() => handleLegitimacyChange(true)} className="text-green-600 border-green-200 hover:bg-green-50 hidden sm:flex">
-                     Mark Legit
-                  </Button>
-               )}
-               {(alert.is_legit === null || alert.is_legit === true) && (
-                  <Button variant="outline" size="sm" onClick={() => handleLegitimacyChange(false)} className="text-gray-600 border-gray-200 hover:bg-gray-50 hidden sm:flex">
-                     Mark Bogus
-                  </Button>
-               )}
-
-               {/* Status Update Dropdown */}
-               <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                     <Button variant="default" size="sm">
-                        Update Status <ChevronDown className="w-4 h-4 ml-2" />
-                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                     <DropdownMenuItem onClick={() => handleStatusChange('active')}>Set Active</DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => handleStatusChange('ongoing')}>Set Ongoing</DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => handleStatusChange('resolved')}>Set Resolved</DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => handleStatusChange('bogus')}>Set Bogus</DropdownMenuItem>
-                  </DropdownMenuContent>
-               </DropdownMenu>
-            </div>
+            {/* REMOVED: CDRRMO cannot update SOS status/legit — view only */}
          </div>
 
          {/* Info Grid */}
@@ -230,22 +160,7 @@ export default function DetailPanel({ alert, onBack }: DetailPanelProps) {
          })}
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 bg-white border-t mt-auto">
-         <form onSubmit={submitRemark} className="flex gap-2">
-             <Input 
-                value={newRemark}
-                onChange={e => setNewRemark(e.target.value)}
-                placeholder="Type an official remark or update..."
-                className="flex-1"
-                disabled={submitting}
-             />
-             <Button type="submit" disabled={!newRemark.trim() || submitting} className="shrink-0 bg-blue-600 hover:bg-blue-700">
-                 {submitting ? <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Send className="w-4 h-4 mr-2" />}
-                 Send
-             </Button>
-         </form>
-      </div>
+      {/* REMOVED: CDRRMO cannot update SOS status/legit — view only */}
     </div>
   );
 }
