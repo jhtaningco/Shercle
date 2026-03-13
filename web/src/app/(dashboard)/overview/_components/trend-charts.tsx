@@ -102,26 +102,26 @@ export default function TrendCharts({ data }: Props) {
 
   // 5. Gender
   const genderData = useMemo(() => {
-     let male = 0;
-     let female = 0;
+     const counts: Record<string, number> = { male: 0, female: 0, 'non-binary': 0, other: 0, 'prefer not to say': 0 };
      const countGender = (items: any[]) => {
          items.forEach(x => {
-            const g = x.profiles?.gender?.toLowerCase();
-            if (g === 'male') male++;
-            if (g === 'female') female++;
+            const g = (x.profiles?.gender || '').toLowerCase();
+            if (g in counts) counts[g]++;
          });
      };
-     // Generally SOS might not have strict gender tracking in some cases, but the instructions say specifically to apply gender to Complaints & Incidents. We fetched it for all just in case.
      countGender(data.complaints);
      countGender(data.incidents);
 
      return [
-       { name: 'Male', value: male, fill: '#3b82f6' },
-       { name: 'Female', value: female, fill: '#ec4899' }
-     ];
+       { name: 'Male', value: counts['male'], fill: '#3b82f6' },
+       { name: 'Female', value: counts['female'], fill: '#ec4899' },
+       { name: 'Non-Binary', value: counts['non-binary'], fill: '#a855f7' },
+       { name: 'Other', value: counts['other'], fill: '#f97316' },
+       { name: 'Prefer Not to Say', value: counts['prefer not to say'], fill: '#6b7280' }
+     ].filter(d => d.value > 0); // Only show slices with data
   }, [data]);
 
-  const hasGenderData = genderData[0].value > 0 || genderData[1].value > 0;
+  const hasGenderData = genderData.length > 0;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -150,6 +150,9 @@ export default function GlobalFiltersBar({ filters, onChange, barangays }: Props
               <SelectItem value="All">All Genders</SelectItem>
               <SelectItem value="Male">Male</SelectItem>
               <SelectItem value="Female">Female</SelectItem>
+              <SelectItem value="Non-Binary">Non-Binary</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+              <SelectItem value="Prefer Not to Say">Prefer Not to Say</SelectItem>
             </SelectContent>
           </Select>
         </div>

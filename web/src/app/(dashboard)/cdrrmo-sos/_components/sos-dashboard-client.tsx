@@ -8,7 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Map, List, Bell, BellOff, AlertTriangle } from 'lucide-react';
 import ListView from './list-view';
-import MapView from './map-view';
+import dynamic from 'next/dynamic';
+
+const MapView = dynamic(() => import('./map-view'), { 
+  ssr: false,
+  loading: () => <div className="flex-1 flex items-center justify-center bg-slate-100">Loading Map...</div>
+});
 import { toast } from 'sonner';
 
 export default function SOSDashboardClient() {

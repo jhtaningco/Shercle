@@ -51,9 +51,10 @@ export default function BarangayBreakdown({ data, barangays }: Props) {
         
         if (item.category) b.categories[item.category] = (b.categories[item.category] || 0) + 1;
         
-        const gender = item.profiles?.gender?.toLowerCase();
+        const gender = (item.profiles?.gender || '').toLowerCase();
         if (gender === 'male') b.males++;
-        if (gender === 'female') b.females++;
+        else if (gender === 'female') b.females++;
+        else if (gender) b.others = (b.others || 0) + 1;
       }
     };
 
@@ -128,7 +129,7 @@ export default function BarangayBreakdown({ data, barangays }: Props) {
                   <TableHead className="text-right">Incidents</TableHead>
                   <TableHead>Top Category</TableHead>
                   <TableHead className="text-right">Res. Rate</TableHead>
-                  <TableHead className="text-right border-l">M | F</TableHead>
+                  <TableHead className="text-right border-l">M | F | O</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -150,7 +151,7 @@ export default function BarangayBreakdown({ data, barangays }: Props) {
                         <TableCell className="text-muted-foreground text-xs">{row.topCategory}</TableCell>
                         <TableCell className="text-right text-emerald-600">{row.resolutionRate}%</TableCell>
                         <TableCell className="text-right border-l text-xs text-muted-foreground">
-                            <span className="text-blue-600 font-medium">{row.males}</span> <span className="mx-1">|</span> <span className="text-pink-600 font-medium">{row.females}</span>
+                            <span className="text-blue-600 font-medium">{row.males}</span> <span className="mx-1">|</span> <span className="text-pink-600 font-medium">{row.females}</span> <span className="mx-1">|</span> <span className="text-purple-600 font-medium">{row.others || 0}</span>
                         </TableCell>
                       </TableRow>
                       
